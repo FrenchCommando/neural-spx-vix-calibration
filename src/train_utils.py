@@ -1,20 +1,19 @@
 import torch
 import time
-import checkpoint
 import torchsde
 import json
 import os
-from smile import Datetime
 from collections import OrderedDict
-from vix import compute_VIX2
-from run import run_model_ta_tb
-from utils import compute_smile_spx
-from utils import compute_smile_vix
-from utils import compute_loss_smile_spx
-from utils import compute_loss_smile_vix
-from utils import tensorize_smile
-from utils import fwd_curve
-from smile import Datetime
+import src.checkpoint
+from src.vix import compute_VIX2
+from src.run import run_model_ta_tb
+from src.utils import compute_smile_spx
+from src.utils import compute_smile_vix
+from src.utils import compute_loss_smile_spx
+from src.utils import compute_loss_smile_vix
+from src.utils import tensorize_smile
+from src.utils import fwd_curve
+from src.smile import Datetime
 
 
 def train(model, epoch, loss_func, checkpoint_func, save_step):
@@ -25,7 +24,7 @@ def train(model, epoch, loss_func, checkpoint_func, save_step):
         loss, output = loss_func(epoch)
         loss.backward()
 
-        if epoch % save_step == 1:
+        if epoch % save_step == 0:
             checkpoint_func(model, epoch, loss, output)
 
         opt.step()
@@ -35,7 +34,7 @@ def train(model, epoch, loss_func, checkpoint_func, save_step):
 
 def wrap_loss_func(date, params, smiles, maturities, gen, dt, fSPX):
     batch_size = params["batch_size"]
-    xy0 = torch.zeros([batch_size, 2], device="cuda:0")
+    xy0 = torch.zeros([batch_size, 2], device="cuda:0" if torch.cuda.is_available() else "cpu")
     spx_maturities = maturities["spx"]
     vix_maturities = maturities["vix"]
     all_maturities = maturities["all"]
@@ -51,7 +50,7 @@ def wrap_loss_func(date, params, smiles, maturities, gen, dt, fSPX):
         t1=T_last.t + 2 * dt,
         dt=dt,
         size=[batch_size, 2],
-        device="cuda:0",
+        device="cuda:0" if torch.cuda.is_available() else "cpu",
         entropy=42,
     )
 
@@ -170,9 +169,9 @@ def prepare_data(data, date, maturities):
 
 def checkpoint_func(model, epoch, loss, output):
     name = model["name"]
-    js = json.dumps(output, indent=4, cls=checkpoint.Encoder)
-    path = f"checkpoints/{name}/{epoch}.json"
+    js = json.dumps(output, indent=4, cls=src.checkpoint.Encoder)
+    path = f"checkpoints/{name}/{epoch}".replace(".", "") + ".json"
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w") as f:
         f.write(js)
-    checkpoint.save_checkpoint(epoch, loss, model)
+    src.checkpoint.save_checkpoint(epoch, loss, model)

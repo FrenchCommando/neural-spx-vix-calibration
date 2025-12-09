@@ -1,5 +1,6 @@
 import torch
-from vol import V_and_MuY_rho_tanh
+from src.vol import V_and_MuY_rho_tanh
+
 
 MODEL = {
     "nets": {
@@ -9,7 +10,7 @@ MODEL = {
             torch.nn.Linear(16, 16),
             torch.nn.Tanh(),
             torch.nn.Linear(16, 4),
-        ).to("cuda:0"),
+        ).to("cuda:0" if torch.cuda.is_available() else "cpu"),
     },
     "name": "spx_vix_small",
     "optimizer": None,

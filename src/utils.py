@@ -1,9 +1,9 @@
 import torch
 import numpy as np
-from smile import Smile
-from bs import implied_vol
+from src.smile import Smile
+from src.bs import implied_vol
 from scipy.interpolate import interp1d
-from vix import compute_VIX2
+from src.vix import compute_VIX2
 
 
 def compute_smile_spx(maturity, xy, spot, spx_smiles):
@@ -13,8 +13,8 @@ def compute_smile_spx(maturity, xy, spot, spx_smiles):
     f = s.mean().detach()
     c = (s - strikes).relu().mean(axis=0)
     p = (strikes - s).relu().mean(axis=0)
-    t = torch.tensor(maturity.t, device="cuda:0")
-    i = implied_vol(f, t0, t, strikes, c, p).cuda()
+    t = torch.tensor(maturity.t, device="cuda:0" if torch.cuda.is_available() else "cpu")
+    i = implied_vol(f, t0, t, strikes, c, p, device="cuda:0" if torch.cuda.is_available() else "cpu").cpu()
     smile = Smile(
         "SPX model",
         maturity,
@@ -41,8 +41,8 @@ def compute_smile_vix(maturity, XY, R, vix_smiles):
     t0 = torch.tensor(0.0)
     CVIX = (VIX - strikes).relu().mean(axis=0)
     PVIX = (strikes - VIX).relu().mean(axis=0)
-    t = torch.tensor(maturity.t, device="cuda:0")
-    IVIX = implied_vol(fVIX, t0, t, strikes, CVIX, PVIX).cuda()
+    t = torch.tensor(maturity.t, device="cuda:0" if torch.cuda.is_available() else "cpu")
+    IVIX = implied_vol(fVIX, t0, t, strikes, CVIX, PVIX, device="cuda:0" if torch.cuda.is_available() else "cpu").cpu()
     smile = Smile(
         "VIX model",
         maturity,
@@ -93,8 +93,9 @@ def compute_loss_smile_vix(smile1, smile2, use_weights=False):
 
 
 def tensorize_smile(
-    data, maturity, instrument, nb_points, alpha1=None, alpha2=None, device="cuda:0"
+    data, maturity, instrument, nb_points, alpha1=None, alpha2=None, device="cuda:0" if torch.cuda.is_available() else "cpu"
 ):
+    # print(maturity, list(data.keys()))
     data = data[maturity]["smile"]
     ts = lambda array: torch.tensor(array, device=device, dtype=torch.float32)
     fwd = ts(data["fwd"])
@@ -129,9 +130,10 @@ def tensorize_smile(
 def fwd_curve(data):
     spx_maturities = data["spx_maturities"]
     t = [maturity.t for maturity in spx_maturities]
+    t_min = min(t) + 1e-5  # weirdly min is inconsistent with bound_error
     fwd = [data["spx_smiles"][maturity]["smile"]["fwd"] for maturity in spx_maturities]
     fSPX_func = interp1d(t, fwd, kind="cubic")
-    fSPX = lambda t: float(fSPX_func(np.maximum(t.cpu(), 0.0)))
+    fSPX = lambda t: float(fSPX_func(np.maximum(t.cpu(), t_min)))
     return fSPX
 
 

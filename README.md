@@ -7,6 +7,8 @@
 ## Requirements
 python >= 3.6, torch>=1.13.0 and torchsde>=0.2.5
 
+matplotlib, orthnet, pandas, scikit-learn, swig, tqdm
+
 ## Data
 
 Data should be downloaded from the [[Wharton Research Data Service Optionmetrics database]](https://wrds-www.wharton.upenn.edu/login/?next=/pages/get-data/optionmetrics/ivy-db-us/options/option-prices) and placed in `src/data/csv` under the csv format:

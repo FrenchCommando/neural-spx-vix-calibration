@@ -1,7 +1,7 @@
 import torch
 
-Rho_min = torch.tensor(-0.99999, device="cuda:0")
-Rho_max = torch.tensor(+0.99999, device="cuda:0")
+Rho_min = torch.tensor(-0.99999, device="cuda:0" if torch.cuda.is_available() else "cpu")
+Rho_max = torch.tensor(+0.99999, device="cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 def V_and_MuY_rho_tanh(model, alpha=1):
@@ -13,7 +13,7 @@ def V_and_MuY_rho_tanh(model, alpha=1):
         muY = muY
         """
         batch_size = tXY.shape[0]
-        zeros = torch.zeros([batch_size, 1], device="cuda:0")
+        zeros = torch.zeros([batch_size, 1], device="cuda:0" if torch.cuda.is_available() else "cpu")
         U = model["nets"]["phi"](tXY)
         SigmaX = 1 + torch.tanh(U[:, [0]])
         SigmaY = alpha * (1 + torch.tanh(U[:, [1]]))
@@ -38,7 +38,7 @@ def V_and_MuY_rho_exp(model):
         muY = muY
         """
         batch_size = tXY.shape[0]
-        zeros = torch.zeros([batch_size, 1], device="cuda:0")
+        zeros = torch.zeros([batch_size, 1], device="cuda:0" if torch.cuda.is_available() else "cpu")
         U = model["nets"]["phi"](tXY)
         SigmaX = torch.exp(U[:, [0]])
         SigmaY = torch.exp(U[:, [1]])
@@ -63,7 +63,7 @@ def V_and_MuY_rho_softplus(model):
         muY = muY
         """
         batch_size = tXY.shape[0]
-        zeros = torch.zeros([batch_size, 1], device="cuda:0")
+        zeros = torch.zeros([batch_size, 1], device="cuda:0" if torch.cuda.is_available() else "cpu")
         U = model["nets"]["phi"](tXY)
         SigmaX = torch.nn.functional.softplus(U[:, [0]])
         SigmaY = torch.nn.functional.softplus(U[:, [1]])

@@ -1,11 +1,11 @@
 import torch
-from utils import compute_smile_spx, compute_smile_vix
-from smile import Smile
-from vix import compute_VIX2
+from src.utils import compute_smile_spx, compute_smile_vix
+from src.smile import Smile
+from src.vix import compute_VIX2
 
 
 def run_model_ta_tb(gen, spot, t, xy0, spx_smiles, bm):
-    TAU = torch.tensor(30 / 365, device="cuda:0")
+    TAU = torch.tensor(30 / 365, device="cuda:0" if torch.cuda.is_available() else "cpu")
     _, XY, R, _ = gen(t, xy0, bm=bm)
     R = 2 * R / TAU
     return XY, R

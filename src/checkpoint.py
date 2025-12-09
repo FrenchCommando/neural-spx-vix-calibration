@@ -3,7 +3,7 @@ import datetime
 import glob
 import torch
 import json
-from smile import Smile
+from src.smile import Smile
 
 
 class Encoder(json.JSONEncoder):
@@ -23,14 +23,14 @@ def save_checkpoint(epoch, loss, model):
         "optimizer": model["optimizer"].state_dict(),
     }
     time = datetime.datetime.now().strftime("%m%d-%H:%M:%S")
-    path = f"checkpoints/{name}/{state['epoch']}-{time}-{state['loss']:.5f}.ckpt"
+    path = f"checkpoints/{name}/{state['epoch']}-{time}-{state['loss']:.5f}".replace(":", "").replace(".", "") + ".ckpt"
     torch.save(state, path)
     print(f"{path} saved. epoch : {epoch}, l : {state['loss']:.4f}")
 
 
 def load(path, model):
     print(f"Loading {path}")
-    state = torch.load(path, map_location="cuda:0")
+    state = torch.load(path, map_location="cuda:0" if torch.cuda.is_available() else "cpu")
     for k, m in state.items():
         if k not in ["loss", "epoch", "optimizer"]:
             model["nets"][k].load_state_dict(m)

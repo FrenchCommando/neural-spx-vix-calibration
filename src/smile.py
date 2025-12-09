@@ -2,9 +2,9 @@ import torch
 import matplotlib.pyplot as plt
 import json
 import pandas as pd
-import datetime
-from bs import callbs
-from bs import putbs
+import datetime as dt
+from src.bs import callbs
+from src.bs import putbs
 
 plt.rcParams["figure.figsize"] = (9, 6)
 
@@ -26,7 +26,7 @@ class Datetime:
         return self.string.__hash__()
 
     def plus_30d(self):
-        tau = datetime.timedelta(days=30)
+        tau = dt.timedelta(days=30)
         return self.__class__((self.datetime + tau).strftime("%Y/%m/%d"), T0=self.T0)
 
     def __str__(self):

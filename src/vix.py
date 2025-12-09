@@ -1,5 +1,5 @@
 import torch
-from polynomial import poly
+from src.polynomial import poly
 
 
 def tXYfy(t, XY, device):
@@ -12,7 +12,7 @@ def tXYfy(t, XY, device):
 
 def do_lstsq(A, R, method="approx"):
     if method == "approx":
-        B = A.T @ A + 1e-6 * torch.eye(A.shape[1]).cuda()
+        B = A.T @ A + 1e-6 * torch.eye(A.shape[1]).cpu()
         lstsq = torch.inverse(B) @ A.T @ R
     elif method == "qr":
         q, r = torch.linalg.qr(A)
@@ -23,7 +23,7 @@ def do_lstsq(A, R, method="approx"):
             lstsq = torch.linalg.solve(B, A.T @ R)
         except torch.linalg.LinAlgError:
             print("LinAlgError")
-            B = A.T @ A + 1e-3 * torch.eye(A.shape[1]).cuda()
+            B = A.T @ A + 1e-3 * torch.eye(A.shape[1]).cpu()
             lstsq = torch.inverse(B) @ A.T @ R
     else:
         lstsq = torch.linalg.lstsq(A, R).solution
@@ -46,7 +46,7 @@ def compute_VIX2(XY12, R, degree, k="M"):
 
 
 def compute_VIX2_nested(gen12, T1, T2, TAU, XY1, sub_batch_size, batch_size_nested, k):
-    R_nested = torch.zeros([k, sub_batch_size, 1], device="cuda:0")
+    R_nested = torch.zeros([k, sub_batch_size, 1], device="cuda:0" if torch.cuda.is_available() else "cpu")
     n = batch_size_nested // k
     XY1_nested = XY1[:sub_batch_size].repeat(k, 1)
     with torch.no_grad():

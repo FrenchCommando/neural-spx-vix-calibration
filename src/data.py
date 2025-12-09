@@ -5,24 +5,28 @@ from scipy.interpolate import interp1d
 import torch
 import json
 import datetime
-from bs import implied_vol_np
-from bs import callbs_np
-from smile import Datetime
+from src.bs import implied_vol_np
+from src.bs import callbs_np
+from src.smile import Datetime
 from scipy.optimize import minimize
 
-plt.style.use("seaborn")
+
+# https://stackoverflow.com/questions/74716259/the-seaborn-styles-shipped-by-matplotlib-are-deprecated-since-3-6
+plt.style.use("seaborn-v0_8")
 
 
 tau = datetime.timedelta(days=30)
 
 
-SPX = pd.read_csv("./data/csv/spx_bid_ask.csv").query("am_settlement == 0")
+SPX = pd.read_csv("data/csv/spx_bid_ask.csv").query("am_settlement == 0")
 SPX.strike_price = SPX.strike_price / 1000
 
-VIX = pd.read_csv("./data/csv/vix_bid_ask.csv")
+# print(SPX)
+
+VIX = pd.read_csv("data/csv/vix_bid_ask.csv")
 VIX.strike_price = VIX.strike_price / 1000
 
-YIELD_CURVE = pd.read_csv("./data/csv/yield-curve.csv")
+YIELD_CURVE = pd.read_csv("data/csv/yield-curve.csv")
 
 def choose_fwd(asks_fwd, bids_fwd):
     def f(fwd):
@@ -192,7 +196,7 @@ def extract_yield_curve(yield_curve):
 def load_dataset(date, full=False):
     spx = SPX.query(f"date == '{date}'")
     vix = VIX.query(f"date == '{date}'")
-    yield_curve = YIELD_CURVE.query(f"date == '{date}'")
+    # yield_curve = YIELD_CURVE.query(f"date == '{date}'")
     T0 = spx.date.drop_duplicates().values
     assert len(T0) == 1
     T0 = pd.to_datetime(str(T0[0]))
@@ -203,14 +207,14 @@ def load_dataset(date, full=False):
     # if spx_maturities[0] == date:
     #    spx_maturities = spx_maturities[1:]
 
-    yield_curve = extract_yield_curve(yield_curve)
+    # yield_curve = extract_yield_curve(yield_curve)
 
     data = {
         "vix_smiles": {},
         "spx_smiles": {},
         "vix_maturities": vix_maturities,
         "spx_maturities": spx_maturities,
-        "yield_curve": yield_curve,
+        # "yield_curve": yield_curve,
     }
 
     for maturity in vix_maturities:
